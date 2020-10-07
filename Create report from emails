@@ -1,0 +1,121 @@
+'In this subroutine we can download the time, sender name, email body:
+Option Explicit
+
+Sub outlook_body()
+
+Dim O As Outlook.Application
+Set O = Outlook.Application
+
+Dim ONS As Outlook.Namespace
+Set ONS = O.GetNamespace("MAPI")
+
+Dim MyFOL As Outlook.Folder
+Set MyFOL = ONS.GetDefaultFolder(olFolderInbox).Folders("Production")
+
+Dim OMAIL As Outlook.MailItem
+Set OMAIL = O.CreateItem(olMailItem)
+
+Dim i As Long
+i = 2
+For Each OMAIL In MyFOL.Items
+    If OMAIL.ReceivedTime >= Range("O1").Value Then
+    Cells(i, 1).Value = OMAIL.ReceivedTime
+    Cells(i, 2).Value = OMAIL.Sender
+    Cells(i, 3).Value = OMAIL.Body
+    
+    i = i + 1
+    
+ End If
+ 
+Next OMAIL
+
+End Sub
+___________________________________________________________________________
+'To manipulate the data, linebreaks from email body needs to be removed
+Sub RemoveLineBreaks()
+
+Dim i As Long
+Dim lastrow As Long
+
+lastrow = Cells(Rows.Count, 3).End(xlUp).Row
+i = 2
+For i = 2 To lastrow
+    Cells(i, 3) = Replace(Cells(i, 3), Chr(10), "")
+    Cells(i, 3) = Replace(Cells(i, 3), Chr(13), "")
+    Cells(i, 3) = Replace(Cells(i, 3), "ID:", "")
+    Cells(i, 3) = Replace(Cells(i, 3), "PREVIOUS STATUS:", "")
+    Cells(i, 3) = Replace(Cells(i, 3), "CURRENT STATUS:", "")
+    Cells(i, 3) = Replace(Cells(i, 3), "DESCRIPTION:", "")
+    Cells(i, 3) = Replace(Cells(i, 3), "ISSUES:", "")
+    Cells(i, 3) = Replace(Cells(i, 3), "T:", "")
+    Cells(i, 3) = Replace(Cells(i, 3), "TRAININGS:", "")
+    Cells(i, 3) = Replace(Cells(i, 3), "T:", "")
+Next
+
+
+End Sub
+___________________________________________________________________________
+'Spliting email body into seperate columns
+Sub split_function()
+ Dim var As Variant
+ Dim rw As Long
+ 
+ 
+ Application.DisplayAlerts = False
+ 
+ With Worksheets("Production Report")
+    
+        With .Range(.Cells(2, "C"), .Cells(.Rows.Count, "C").End(xlUp))
+        
+        .TextToColumns Destination:=.Cells(1, 2), DataType:=xlDelimited, _
+                       TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=False, Tab:=True, _
+                       Semicolon:=False, Comma:=False, Space:=False, Other:=True, OtherChar _
+                       :=";", FieldInfo:=Array(Array(1, 1), Array(2, 1)), ThousandsSeparator:=".", _
+                       TrailingMinusNumbers:=True
+                       
+        End With
+End With
+
+    Columns("C:D").Hidden = True
+    
+    For i = 2 To Cells(Rows.Count, "H").End(xlUp).Row
+    Cells(i, "H").Value = vbCrLf & Cells(i, "H").Value & vbCrLf
+Next i
+    
+    For i = 2 To Cells(Rows.Count, "I").End(xlUp).Row
+    Cells(i, "I").Value = vbCrLf & Cells(i, "I").Value & vbCrLf
+Next i
+
+    For i = 2 To Cells(Rows.Count, "K").End(xlUp).Row
+    Cells(i, "K").Value = vbCrLf & Cells(i, "K").Value & vbCrLf
+Next i
+
+Application.DisplayAlerts = True
+
+End Sub
+___________________________________________________________________________
+'Create report and save it as new workbook
+Sub Create_report()
+
+Dim myValue As Variant
+'myValue = InputBox("Put first letter of User Name")
+
+With Workbooks.Add
+    ThisWorkbook.Sheets(1).Range("A:A").Copy .Sheets(1).Range("A1")
+    ThisWorkbook.Sheets(1).Range("B:B").Copy .Sheets(1).Range("B1")
+    ThisWorkbook.Sheets(1).Range("E:E").Copy .Sheets(1).Range("C1")
+    ThisWorkbook.Sheets(1).Range("F:F").Copy .Sheets(1).Range("D1")
+    ThisWorkbook.Sheets(1).Range("G:G").Copy .Sheets(1).Range("E1")
+    ThisWorkbook.Sheets(1).Range("H:H").Copy .Sheets(1).Range("F1")
+    ThisWorkbook.Sheets(1).Range("I:I").Copy .Sheets(1).Range("G1")
+    ThisWorkbook.Sheets(1).Range("J:J").Copy .Sheets(1).Range("H1")
+    ThisWorkbook.Sheets(1).Range("K:K").Copy .Sheets(1).Range("I1")
+    ThisWorkbook.Sheets(1).Range("L:L").Copy .Sheets(1).Range("J1")
+    ThisWorkbook.Sheets(1).Range("M:M").Copy .Sheets(1).Range("K1")
+    ThisWorkbook.Sheets(1).Range("O:O").Copy .Sheets(1).Range("L1")
+    '.SaveAs "\\dbg.ads.db.com\fra-fsu-users\" & myValue & "\" & Environ("UserName") & "\config\Desktop\Production_report\Production_report_" & Format(Now(), "DD-MMM-YYYY") & ".xlsx"
+    '.SaveAs "\\dbg.ads.db.com\lon-gtc\gt\W:\Warsaw\Katarzyna Matyjanko\Production_report_" & Format(Now(), "DD-MMM-YYYY") & ".xlsx"
+    .SaveAs "W:\Warsaw\Katarzyna Matyjanko\Production\Production_report_" & Format(Now(), "DD-MMM-YYYY") & ".xlsx"
+    .Close
+  End With
+End Sub
