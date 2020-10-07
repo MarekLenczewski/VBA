@@ -1,0 +1,129 @@
+'The whole subroutines code written for data manipulation from unternehmensregister, companies with lot of shareholders, to count them automatically after inserting 
+'the data from pdf
+
+Sub Find_and_Replace()
+
+Application.DisplayAlerts = False
+'Declare variables
+Dim ws As Worksheet
+Dim fnd As Variant
+Dim rplc As Variant
+Dim fnd1 As Variant
+Dim rplc2 As Variant
+
+'Assign values to find and replace
+fnd = ", Einlage:"
+rplc = "^"
+fnd1 = "EUR"
+rplc1 = ""
+
+Set ws = Sheets("Sheet1")
+
+ws.Cells.Replace what:=fnd, Replacement:=rplc, MatchCase:=True
+ws.Cells.Replace what:=fnd1, Replacement:=rplc1, MatchCase:=True
+
+Application.DisplayAlerts = True
+
+End Sub
+__________________________________________________________________
+' Removing blank cells, after preparing the data for next steps
+Sub RemoveBlankCells()
+
+Dim Rng As Range
+
+On Error GoTo NoBlanksFound
+    Set Rng = Range("A:A").SpecialCells(xlCellTypeBlanks)
+On Error GoTo 0
+
+Rng.Rows.Delete Shift:=xlShiftUp
+
+Exit Sub
+
+NoBlanksFound:
+    MsgBox "No blank cells were found"
+    
+End Sub
+__________________________________________________________________
+'Splitting data about shareholders into columns
+Sub split_function()
+ Dim var As Variant
+ Dim rw As Long
+ 
+ 
+ Application.DisplayAlerts = False
+ 
+ With Worksheets("Sheet1")
+    
+        With .Range(.Cells(1, "A"), .Cells(.Rows.Count, "A").End(xlUp))
+        
+        .TextToColumns Destination:=.Cells(1, 2), DataType:=xlDelimited, _
+                       TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=False, Tab:=True, _
+                       Semicolon:=False, Comma:=False, Space:=False, Other:=True, OtherChar _
+                       :="^", FieldInfo:=Array(Array(1, 1), Array(2, 1)), ThousandsSeparator:=".", _
+                       TrailingMinusNumbers:=True
+                       
+        End With
+End With
+
+    Columns("C:C").Select
+    Selection.NumberFormat = "0.00"
+
+
+Application.DisplayAlerts = True
+
+End Sub
+__________________________________________________________________
+'Summing total amount of shares 
+
+Sub Sum_Shares()
+
+Dim lastRow As Long
+
+lastRow = Range("C1").End(xlDown).Row
+Cells(lastRow + 1, "C").Formula = "=SUM(C1:C" & lastRow & ")"
+
+End Sub
+__________________________________________________________________
+'Counting percentage of shares owned based on sum of shares
+
+Sub Divide_by_last_value()
+
+Dim lastRow As Long, arr(), i As Long, divisor As Double
+ With ThisWorkbook.Worksheets("Sheet1")
+    lastRow = .Cells(.Rows.Count, "C").End(xlUp).Row
+    arr = .Range("C1:D" & lastRow).Value
+    divisor = arr(UBound(arr, 1), 1)
+    For i = LBound(arr, 1) To UBound(arr, 1)
+        arr(i, 2) = arr(i, 1) / divisor * 100
+    Next
+    .Cells(1, 3).Resize(UBound(arr, 1), UBound(arr, 1)) = arr
+End With
+
+Range("E:E").Clear
+Worksheets("Sheet1").Columns("A").Hidden = True
+
+Rows(1).Insert Shift:=xlDown
+    
+    Range("B1").Value = "Shareholder Data"
+    Range("C1").Value = "Shares in EUR"
+    Range("D1").Value = "Shares in %"
+    Range("B1").Interior.ColorIndex = 6
+    Range("C1").Interior.ColorIndex = 6
+    Range("D1").Interior.ColorIndex = 6
+End Sub
+__________________________________________________________________
+'Save the table in new workbook
+
+Sub Copy_Calculations()
+
+Dim myValue As Variant
+myValue = InputBox("Put first letter of User Name")
+
+With Workbooks.Add
+    ThisWorkbook.Sheets(1).Range("B:B").Copy .Sheets(1).Range("B1")
+    ThisWorkbook.Sheets(1).Range("C:C").Copy .Sheets(1).Range("C1")
+    ThisWorkbook.Sheets(1).Range("D:D").Copy .Sheets(1).Range("D1")
+    .SaveAs "\\dbg.ads.db.com\fra-fsu-users\" & myValue & "\" & Environ("UserName") & "\config\Desktop\Macro for Shareholders\List_of_shareholders.xlsx"
+    .Close
+  End With
+End Sub
