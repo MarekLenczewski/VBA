@@ -1,0 +1,60 @@
+Public File As String
+
+Sub import()
+
+Application.ScreenUpdating = False
+
+Call Choosefile
+
+Dim sourceworkbook As Workbook
+Dim currentworkbook As Workbook
+
+
+Set currentworkbook = ThisWorkbook
+Set sourceworkbook = Workbooks.Open(File)
+
+    sourceworkbook.Sheets("Warsaw").Copy Before:=currentworkbook.Sheets("Report")
+    sourceworkbook.Close
+    
+Set sourceworkbook = Nothing
+Set sourceworkbook = Nothing
+
+    ThisWorkbook.Activate
+    Worksheets("Warsaw").Activate
+    Worksheets("Warsaw").Range("A1").Select
+    
+Application.ScreenUpdating = True
+    
+End Sub
+
+
+Sub Choosefile()
+
+Dim fd As Office.FileDialog
+
+Set fd = Application.FileDialog(msoFileDialogFilePicker)
+
+
+    With fd
+    
+        .AllowMultiSelect = False
+        
+        .Title = "Please choose file."
+        
+        
+        .Filters.Clear
+        .Filters.Add "Excel files", "*.xls, *.xlsx"
+        .Filters.Add "All files", "*.*"
+        .Filters.Add "Pictures", "*.jpg, *.gif, *.png"
+        .Filters.Add "Macro enabled files", "*.xlsm"
+        .Filters.Add "Access Files", "*.accdb"
+        .Filters.Add "Text files", "*.txt"
+        .Filters.Add "CSV files", "*.csv"
+        .Filters.Add "Word Files", "*.doc, *.docx"
+        
+        
+    If .Show = True Then
+        File = .SelectedItems(1)
+    End If
+   End With
+End Sub
